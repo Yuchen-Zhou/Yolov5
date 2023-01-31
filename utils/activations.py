@@ -1,79 +1,63 @@
-# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
-"""
-Activation functions
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.nn as nn
 
 
-class SiLU(nn.Module):
-    # SiLU activation https://arxiv.org/pdf/1606.08415.pdf
+# Swish ------------------------------------------------------------------------
+class SwishImplementation(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return x * torch.sigmoid(x)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x = ctx.saved_tensors[0]
+        sx = torch.sigmoid(x)
+        return grad_output * (sx * (1 + x * (1 - sx)))
+
+
+class MemoryEfficientSwish(nn.Module):
+    @staticmethod
+    def forward(x):
+        return SwishImplementation.apply(x)
+
+
+class HardSwish(nn.Module):  # https://arxiv.org/pdf/1905.02244.pdf
+    @staticmethod
+    def forward(x):
+        return x * F.hardtanh(x + 3, 0., 6., True) / 6.
+
+
+class Swish(nn.Module):
     @staticmethod
     def forward(x):
         return x * torch.sigmoid(x)
 
 
-class Hardswish(nn.Module):
-    # Hard-SiLU activation
+# Mish ------------------------------------------------------------------------
+class MishImplementation(torch.autograd.Function):
     @staticmethod
-    def forward(x):
-        # return x * F.hardsigmoid(x)  # for TorchScript and CoreML
-        return x * F.hardtanh(x + 3, 0.0, 6.0) / 6.0  # for TorchScript, CoreML and ONNX
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return x.mul(torch.tanh(F.softplus(x)))  # x * tanh(ln(1 + exp(x)))
 
-
-class Mish(nn.Module):
-    # Mish activation https://github.com/digantamisra98/Mish
     @staticmethod
-    def forward(x):
-        return x * F.softplus(x).tanh()
+    def backward(ctx, grad_output):
+        x = ctx.saved_tensors[0]
+        sx = torch.sigmoid(x)
+        fx = F.softplus(x).tanh()
+        return grad_output * (fx + x * sx * (1 - fx * fx))
 
 
 class MemoryEfficientMish(nn.Module):
-    # Mish activation memory-efficient
-    class F(torch.autograd.Function):
-
-        @staticmethod
-        def forward(ctx, x):
-            ctx.save_for_backward(x)
-            return x.mul(torch.tanh(F.softplus(x)))  # x * tanh(ln(1 + exp(x)))
-
-        @staticmethod
-        def backward(ctx, grad_output):
-            x = ctx.saved_tensors[0]
-            sx = torch.sigmoid(x)
-            fx = F.softplus(x).tanh()
-            return grad_output * (fx + x * sx * (1 - fx * fx))
-
-    def forward(self, x):
-        return self.F.apply(x)
+    @staticmethod
+    def forward(x):
+        return MishImplementation.apply(x)
 
 
-class FReLU(nn.Module):
-    # FReLU activation https://arxiv.org/abs/2007.11824
-    def __init__(self, c1, k=3):  # ch_in, kernel
-        super().__init__()
-        self.conv = nn.Conv2d(c1, c1, k, 1, 1, groups=c1, bias=False)
-        self.bn = nn.BatchNorm2d(c1)
-
-    def forward(self, x):
-        return torch.max(x, self.bn(self.conv(x)))
-
-
-class AconC(nn.Module):
-    r""" ACON activation (activate or not)
-    AconC: (p1*x-p2*x) * sigmoid(beta*(p1*x-p2*x)) + p2*x, beta is a learnable parameter
-    according to "Activate or Not: Learning Customized Activation" <https://arxiv.org/pdf/2009.04759.pdf>.
-    """
-
-    def __init__(self, c1):
-        super().__init__()
-        self.p1 = nn.Parameter(torch.randn(1, c1, 1, 1))
-        self.p2 = nn.Parameter(torch.randn(1, c1, 1, 1))
-        self.beta = nn.Parameter(torch.ones(1, c1, 1, 1))
-
-    def forward(self, x):
-        dpx = (self.p1 - self.p2) * x
-        return dpx * torch.sigmoid(self.beta * dpx) + self.p2 * x
-
+class Mish(nn.Module):  # https://github.com/digantamisra98/Mish
+    @staticmethod
+    def forward(x):
+        return x * F.softplus(x).tanh()
