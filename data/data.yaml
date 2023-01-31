@@ -1,0 +1,6 @@
+train: data/train/images
+val: data/test/images
+
+nc: 15
+names: ["Corals", "Crabs", "Dolphin", "Jelly Fish", "Lobster", 
+  "Penguin", "Sea Rays", "Sea Urchins", "Seahorse", "Seal", "Sharks", "Squid", "Starfish", "Turtles", "Whale"]
