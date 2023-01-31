@@ -18,6 +18,17 @@ python train.py --img 640 --batch 32 --epochs 100 --data data/data.yaml --cfg mo
 ```
 
 ## 预训练结果
+> Precision-Confidence
+<img src='./imgs/P_curve.png'>
+
+> Precision-Recall
+<img src='./imgs/PR_curve.png'>
+
+> Recall-Confidence
+<img src='./imgs/R_curve.png'>
+
+> 混淆矩阵
+<img src='./imgs/confusion_matrix.png'>
 
 ## 参考
 YOLOv5[https://github.com/ultralytics/yolov5]
