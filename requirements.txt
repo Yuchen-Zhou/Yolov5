@@ -1,28 +1,24 @@
-# YOLOv5 requirements
-# Usage: pip install -r requirements.txt
+# pip install -U -r requirements.txt
+Cython
+numpy==1.17
+opencv-python
+torch>=1.4
+matplotlib
+pillow
+tensorboard
+PyYAML>=5.3
+torchvision
+scipy
+tqdm
+git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI
 
-# Base ------------------------------------------------------------------------
-gitpython
-ipython  # interactive notebook
-matplotlib>=3.2.2
-numpy>=1.18.5
-opencv-python>=4.1.1
-Pillow>=7.1.2
-psutil  # system resources
-PyYAML>=5.3.1
-requests>=2.23.0
-scipy>=1.4.1
-thop>=0.1.1  # FLOPs computation
-torch>=1.7.0  # see https://pytorch.org/get-started/locally (recommended)
-torchvision>=0.8.1
-tqdm>=4.64.0
-# protobuf<=3.20.1  # https://github.com/ultralytics/yolov5/issues/8012
+# Nvidia Apex (optional) for mixed precision training --------------------------
+# git clone https://github.com/NVIDIA/apex && cd apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" . --user && cd .. && rm -rf apex
 
-# Logging ---------------------------------------------------------------------
-tensorboard>=2.4.1
-# clearml>=1.2.0
-# comet
-
-# Plotting --------------------------------------------------------------------
-pandas>=1.1.4
-seaborn>=0.11.0
+# Conda commands (in place of pip) ---------------------------------------------
+# conda update -yn base -c defaults conda
+# conda install -yc anaconda numpy opencv matplotlib tqdm pillow ipython
+# conda install -yc conda-forge scikit-image pycocotools tensorboard
+# conda install -yc spyder-ide spyder-line-profiler
+# conda install -yc pytorch pytorch torchvision
+# conda install -yc conda-forge protobuf numpy && pip install onnx==1.6.0  # https://github.com/onnx/onnx#linux-and-macos

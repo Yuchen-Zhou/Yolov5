@@ -67,6 +67,8 @@ class Model(nn.Module):
         torch_utils.model_info(self)
         print('')
 
+
+
     def forward(self, x, augment=False, profile=False):
         if augment:
             img_size = x.shape[-2:] # 高、宽
@@ -77,6 +79,7 @@ class Model(nn.Module):
                                 torch_utils.scale_img(x, s[1]),
                                 )): 
                 y.append(self.forward_once(xi)[0])
+                
             y[1][..., :4] /= s[0]
             y[2][..., 0] = img_size[1] - y[1][..., 0]
             y[2][..., :4] /= s[1]
@@ -85,15 +88,15 @@ class Model(nn.Module):
             return self.forward_once(x, profile)
 
     def forward_once(self, x, profile=False):
-        y, dt = [], []
+        y, dt = [], []  # outputs
         for m in self.model:
-            if m.f != -1:
-                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]
+            if m.f != -1:  # if not from previous layer
+                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
 
             if profile:
                 try:
                     import thop
-                    o = thop.profile(m, inputs=(x,), verbose=False)[0] / 1E9 * 2
+                    o = thop.profile(m, inputs=(x,), verbose=False)[0] / 1E9 * 2  # FLOPS
                 except:
                     o = 0
                 t = torch_utils.time_synchronized()
@@ -102,13 +105,13 @@ class Model(nn.Module):
                 dt.append((torch_utils.time_synchronized() - t) * 100)
                 print('%10.1f%10.0f%10.1fms %-40s' % (o, m.np, dt[-1], m.type))
 
-            x = m(x)
-            y.append(x if m.i in self.save else None)
-        
+            x = m(x)  # run
+            y.append(x if m.i in self.save else None)  # save output
+
         if profile:
             print('%.1fms total' % sum(dt))
         return x
-
+    
     def _initialize_biases(self, cf=None):  # initialize biases into Detect(), cf is class frequency
         # cf = torch.bincount(torch.tensor(np.concatenate(dataset.labels, 0)[:, 0]).long(), minlength=nc) + 1.
         m = self.model[-1]  # Detect() module
